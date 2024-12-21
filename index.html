@@ -30,26 +30,30 @@
             top: 20px;
             right: 20px;
             z-index: 1000;
-            background: white;
-            padding: 5px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .language-btn {
-            padding: 5px 10px;
-            margin: 0 5px;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #666;
+            background: transparent;
             border: 1px solid #ddd;
-            border-radius: 3px;
-            background: white;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .language-btn.active {
-            background: #4CAF50;
-            color: white;
-            border-color: #4CAF50;
+        .language-btn:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .language-btn::before {
+            content: "🌐";
+            font-size: 14px;
         }
 
         /* Main Layout */
@@ -242,8 +246,7 @@
 </head>
 <body>
     <div class="language-switcher">
-        <button class="language-btn active" data-lang="zh-CN">中文</button>
-        <button class="language-btn" data-lang="en">English</button>
+        <button class="language-btn" onclick="toggleLanguage()">English</button>
     </div>
 
     <div class="container">
@@ -315,114 +318,108 @@
 
     <canvas id="canvas"></canvas>
 <script>
-        // 多语言配置
-        const i18n = {
-            'zh-CN': {
-                meta_description: '免费在线图片去灰底工具，快速去除扫描文档、证件照片、PDF文档中的灰色背景，支持批量处理，无需下载软件。适用于清理文档、证件照片、扫描件等灰色背景，使文字更清晰。',
-                meta_keywords: '图片去灰底,去除灰色背景,扫描文档处理,证件照去灰底,PDF文档去底色,照片背景变白,在线图片处理',
-                page_title: '在线图片去灰底工具 - 一键去除扫描文档/证件照片灰色背景',
-                main_title: '在线图片去灰底工具',
-                description: '快速去除扫描文档、证件照片中的灰色背景，让您的图片更加清晰美观。无需下载软件，支持jpg、png等格式。',
-                select_image_btn: '选择图片',
-                threshold_label: '灰度阈值:',
-                process_btn: '处理图片',
-                download_btn: '下载处理后的图片',
-                original_title: '原图',
-                processed_title: '处理后',
-                preview_placeholder: '等待上传图片...',
-                preview_processed_placeholder: '等待处理结果...',
-                help_title: '使用说明',
-                supported_formats_title: '支持格式',
-                supported_formats_content: 'JPG、PNG、BMP等常见图片格式',
-                recommended_threshold_title: '建议阈值',
-                recommended_threshold_content: '普通文档：180-220\n证件照：200-230',
-                max_size_title: '最大尺寸',
-                max_size_content: '建议不超过4000×4000像素',
-                faq_title: '常见问题解答',
-                faq1_q: '如何选择合适的阈值？',
-                faq1_a: '阈值决定了哪些灰色区域会被转换为白色。阈值越高，越多的灰色区域会被处理。建议从200开始调整，直到达到最佳效果。',
-                faq2_q: '为什么处理后的图片有些地方发白？',
-                faq2_a: '这可能是因为阈值设置过低，建议适当调高阈值，或者对原图进行适当的对比度调整后再处理。',
-                faq3_q: '如何处理大尺寸扫描文档？',
-                faq3_a: '对于大尺寸文档，建议先将图片压缩到合适大小再进行处理，以获得最佳效果。'
-            },
-            'en': {
-                meta_description: 'Free online tool to remove gray backgrounds from scanned documents, ID photos, and PDF files. No software download required.',
-                meta_keywords: 'remove gray background,background removal,document processing,photo editing,PDF background removal',
-                page_title: 'Online Gray Background Removal Tool - One-click Background Removal for Documents',
-                main_title: 'Online Gray Background Removal Tool',
-                description: 'Quickly remove gray backgrounds from scanned documents and ID photos. No software needed, supports jpg, png and other formats.',
-                select_image_btn: 'Select Image',
-                threshold_label: 'Threshold:',
-                process_btn: 'Process Image',
-                download_btn: 'Download Processed Image',
-                original_title: 'Original',
-                processed_title: 'Processed',
-                preview_placeholder: 'Waiting for image upload...',
-                preview_processed_placeholder: 'Waiting for processing...',
-                help_title: 'User Guide',
-                supported_formats_title: 'Supported Formats',
-                supported_formats_content: 'JPG, PNG, BMP and other common formats',
-                recommended_threshold_title: 'Recommended Threshold',
-                recommended_threshold_content: 'Documents: 180-220\nID Photos: 200-230',
-                max_size_title: 'Maximum Size',
-                max_size_content: 'Recommended max size: 4000×4000 pixels',
-                faq_title: 'FAQ',
-                faq1_q: 'How to choose the right threshold?',
-                faq1_a: 'The threshold determines which gray areas will be converted to white. Higher threshold means more gray areas will be processed. Start from 200 and adjust as needed.',
-                faq2_q: 'Why do some areas become too white after processing?',
-                faq2_a: 'This might be due to a low threshold setting. Try increasing the threshold or adjusting the contrast of the original image before processing.',
-                faq3_q: 'How to handle large scanned documents?',
-                faq3_a: 'For large documents, it\'s recommended to compress the image to a suitable size before processing for best results.'
-            }
-        };
-
         // 语言管理器
         class LanguageManager {
             constructor() {
                 this.currentLang = 'zh-CN';
-                this.init();
+                this.translations = {
+                    'zh-CN': {
+                        meta_description: '免费在线图片去灰底工具，快速去除扫描文档、证件照片、PDF文档中的灰色背景，支持批量处理，无需下载软件。适用于清理文档、证件照片、扫描件等灰色背景，使文字更清晰。',
+                        meta_keywords: '图片去灰底,去除灰色背景,扫描文档处理,证件照去灰底,PDF文档去底色,照片背景变白,在线图片处理',
+                        page_title: '在线图片去灰底工具 - 一键去除扫描文档/证件照片灰色背景',
+                        main_title: '在线图片去灰底工具',
+                        description: '快速去除扫描文档、证件照片中的灰色背景，让您的图片更加清晰美观。无需下载软件，支持jpg、png等格式。',
+                        select_image_btn: '选择图片',
+                        threshold_label: '灰度阈值:',
+                        process_btn: '处理图片',
+                        download_btn: '下载处理后的图片',
+                        original_title: '原图',
+                        processed_title: '处理后',
+                        preview_placeholder: '等待上传图片...',
+                        preview_processed_placeholder: '等待处理结果...',
+                        help_title: '使用说明',
+                        supported_formats_title: '支持格式',
+                        supported_formats_content: 'JPG、PNG、BMP等常见图片格式',
+                        recommended_threshold_title: '建议阈值',
+                        recommended_threshold_content: '普通文档：180-220\n证件照：200-230',
+                        max_size_title: '最大尺寸',
+                        max_size_content: '建议不超过4000×4000像素',
+                        faq_title: '常见问题解答',
+                        faq1_q: '如何选择合适的阈值？',
+                        faq1_a: '阈值决定了哪些灰色区域会被转换为白色。阈值越高，越多的灰色区域会被处理。建议从200开始调整，直到达到最佳效果。',
+                        faq2_q: '为什么处理后的图片有些地方发白？',
+                        faq2_a: '这可能是因为阈值设置过低，建议适当调高阈值，或者对原图进行适当的对比度调整后再处理。',
+                        faq3_q: '如何处理大尺寸扫描文档？',
+                        faq3_a: '对于大尺寸文档，建议先将图片压缩到合适大小再进行处理，以获得最佳效果。'
+                    },
+                    'en': {
+                        meta_description: 'Free online tool to remove gray backgrounds from scanned documents, ID photos, and PDF files. No software download required.',
+                        meta_keywords: 'remove gray background,background removal,document processing,photo editing,PDF background removal',
+                        page_title: 'Online Gray Background Removal Tool - One-click Background Removal for Documents',
+                        main_title: 'Online Gray Background Removal Tool',
+                        description: 'Quickly remove gray backgrounds from scanned documents and ID photos. No software needed, supports jpg, png and other formats.',
+                        select_image_btn: 'Select Image',
+                        threshold_label: 'Threshold:',
+                        process_btn: 'Process Image',
+                        download_btn: 'Download Processed Image',
+                        original_title: 'Original',
+                        processed_title: 'Processed',
+                        preview_placeholder: 'Waiting for image upload...',
+                        preview_processed_placeholder: 'Waiting for processing...',
+                        help_title: 'User Guide',
+                        supported_formats_title: 'Supported Formats',
+                        supported_formats_content: 'JPG, PNG, BMP and other common formats',
+                        recommended_threshold_title: 'Recommended Threshold',
+                        recommended_threshold_content: 'Documents: 180-220\nID Photos: 200-230',
+                        max_size_title: 'Maximum Size',
+                        max_size_content: 'Recommended max size: 4000×4000 pixels',
+                        faq_title: 'FAQ',
+                        faq1_q: 'How to choose the right threshold?',
+                        faq1_a: 'The threshold determines which gray areas will be converted to white. Higher threshold means more gray areas will be processed. Start from 200 and adjust as needed.',
+                        faq2_q: 'Why do some areas become too white after processing?',
+                        faq2_a: 'This might be due to a low threshold setting. Try increasing the threshold or adjusting the contrast of the original image before processing.',
+                        faq3_q: 'How to handle large scanned documents?',
+                        faq3_a: 'For large documents, it\'s recommended to compress the image to a suitable size before processing for best results.'
+                    }
+                };
+                this.updateUI();
             }
 
-            init() {
-                this.setupLanguageButtons();
-                this.updateContent(this.currentLang);
+            toggleLanguage() {
+                this.currentLang = this.currentLang === 'zh-CN' ? 'en' : 'zh-CN';
+                this.updateUI();
+                this.updateToggleButton();
             }
 
-            setupLanguageButtons() {
-                document.querySelectorAll('.language-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const lang = btn.dataset.lang;
-                        this.switchLanguage(lang);
-                    });
-                });
+            updateToggleButton() {
+                const btn = document.querySelector('.language-btn');
+                btn.textContent = this.currentLang === 'zh-CN' ? 'English' : '中文';
             }
 
-            switchLanguage(lang) {
-                this.currentLang = lang;
-                this.updateContent(lang);
-                this.updateButtons(lang);
-            }
-
-            updateContent(lang) {
-                document.querySelectorAll('[data-i18n]').forEach(element => {
-                    const key = element.dataset.i18n;
-                    if (i18n[lang] && i18n[lang][key]) {
+            updateUI() {
+                const elements = document.querySelectorAll('[data-i18n]');
+                elements.forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    const translation = this.translations[this.currentLang][key];
+                    if (translation) {
                         if (element.tagName === 'META') {
-                            element.content = i18n[lang][key];
+                            element.setAttribute('content', translation);
                         } else {
-                            element.textContent = i18n[lang][key];
+                            element.textContent = translation;
                         }
                     }
                 });
-                document.title = i18n[lang].page_title;
             }
+        }
 
-            updateButtons(lang) {
-                document.querySelectorAll('.language-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.lang === lang);
-                });
-            }
+        // 初始化语言管理器
+        let languageManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            languageManager = new LanguageManager();
+        });
+
+        function toggleLanguage() {
+            languageManager.toggleLanguage();
         }
 
         // 图像处理相关代码
@@ -499,11 +496,6 @@
             link.href = processedImage.src;
             link.click();
         }
-
-        // 初始化语言管理器
-        document.addEventListener('DOMContentLoaded', () => {
-            new LanguageManager();
-        });
     </script>
 </body>
 </html>
