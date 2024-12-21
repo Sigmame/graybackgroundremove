@@ -1,0 +1,2 @@
+# graybackgroundremove
+Remove Gray Background
